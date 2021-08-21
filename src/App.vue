@@ -37,6 +37,7 @@
             >Currency</label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input
+                @change="handleChange"
                 @keydown.enter="addCoin"
                 v-model="coinInput"
                 type="text"
@@ -48,24 +49,12 @@
             </div>
             <div v-if="hintList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
               <span
+                @click="selectHint(hint)"
+                :key="hint"
+                v-for="hint in hintList"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                BTC
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
+                {{ hint }}
               </span>
             </div>
             <div v-if="alreadyExists"
@@ -199,7 +188,7 @@ export default {
       graph: [], // the graph itself
       listOfCurrency: {},
       alreadyExists: false, // flag for showing error message
-      hintList:[]
+      hintList: ['BTC','DOGE']
     };
   },
   methods: {
@@ -242,6 +231,13 @@ export default {
     select(current) {
       this.chosenCoin = current;
       this.graph = [];
+    },
+    selectHint(hint) {
+      this.coinInput = hint;
+    },
+    handleChange() {
+      //here it's going to search in the list of prefetched data
+      //and fill the hintList with names
     }
   },
   async mounted() {

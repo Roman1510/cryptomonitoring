@@ -46,7 +46,7 @@
                 placeholder="e.g. DOGE"
               >
             </div>
-            <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+            <div v-if="hintList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
               <span
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
@@ -68,8 +68,9 @@
                 CHD
               </span>
             </div>
-            <div class="text-sm text-red-600">
-              Такой тикер уже добавлен
+            <div v-if="alreadyExists"
+                 class="text-sm text-red-600">
+              This one already exists in the list
             </div>
           </div>
         </div>
@@ -196,7 +197,9 @@ export default {
       coins: [], //list of the tracked coins
       chosenCoin: null, //chosen coin to track using the graph
       graph: [], // the graph itself
-      listOfCurrency: {}
+      listOfCurrency: {},
+      alreadyExists: false, // flag for showing error message
+      hintList:[]
     };
   },
   methods: {

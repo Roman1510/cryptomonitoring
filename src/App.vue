@@ -37,7 +37,7 @@
             >Currency</label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input
-                @change="handleChange"
+                @input="handleChange(coinInput)"
                 @keydown.enter="addCoin"
                 v-model="coinInput"
                 type="text"
@@ -49,12 +49,12 @@
             </div>
             <div v-if="hintList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
               <span
-                @click="selectHint(hint)"
+                @click="selectHint(hint.Symbol)"
                 :key="hint"
                 v-for="hint in hintList"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                {{ hint }}
+                {{ hint.Symbol }}
               </span>
             </div>
             <div v-if="alreadyExists"
@@ -186,30 +186,40 @@ export default {
       coins: [], //list of the tracked coins
       chosenCoin: null, //chosen coin to track using the graph
       graph: [], // the graph itself
-      listOfCurrency: {},
+      listOfCurrency: [], // the list where i filter the hints from
       alreadyExists: false, // flag for showing error message
-      hintList: ['BTC','DOGE']
+      hintList: []
     };
   },
   methods: {
+
     addCoin() {
+      this.hintList = [];
       const newCoin = {
         name: this.coinInput.toUpperCase(),
         price: "-"
       };
-      this.coins.push(newCoin);
-      //here I reset the input
-      this.coinInput = "";
-      setInterval(async () => {
-        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newCoin.name}&tsyms=EUR&api_key=${this.api_key}`);
-        const data = await f.json();
+      const found = this.coins.find((e) => {
+        return e.name === newCoin.name;
+      });
+      if (!found) {
+        this.coins.push(newCoin);
+        //here I reset the input
+        this.coinInput = "";
+        setInterval(async () => {
+          const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newCoin.name}&tsyms=EUR&api_key=${this.api_key}`);
+          const data = await f.json();
 
-        this.coins.find((e) => e.name === newCoin.name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
-        console.log(data.EUR);
-        if (this.chosenCoin?.name == newCoin.name) {
-          this.graph.push(data.EUR);
-        }
-      }, 5100);
+          this.coins.find((e) => e.name === newCoin.name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
+          console.log(data.EUR);
+          if (this.chosenCoin?.name == newCoin.name) {
+            this.graph.push(data.EUR);
+          }
+        }, 5100);
+
+      } else {
+        this.alreadyExists = true;
+      }
     },
     deleteCoin(toDelete) {
       this.coins = this.coins.filter(e => e !== toDelete);
@@ -221,7 +231,7 @@ export default {
 
       return this.graph.map(
         (price) => {
-          console.log(5 + (((price - minValue) * 95) / (maxValue - minValue)))
+          console.log(5 + (((price - minValue) * 95) / (maxValue - minValue)));
           return 5 + (((price - minValue) * 95) / (maxValue - minValue));
         }
       );
@@ -231,11 +241,26 @@ export default {
       this.graph = [];
     },
     selectHint(hint) {
+      this.hintList=[]
       this.coinInput = hint;
     },
-    handleChange() {
+    handleChange(input) {
+      this.alreadyExists = false;
       //here it's going to search in the list of prefetched data
       //and fill the hintList with names
+      //0XBTC: {Id: "877383", ImageUrl: "/media/32655871/0xbtc.jpg", Symbol: "0XBTC", FullName: "0xBitcoin (0xBTC)"}
+      const matchingHelper = (input, string) => {
+        return string.toLowerCase().includes(input.toLowerCase());
+      };
+      this.hintList = [];
+      if (input) {
+        this.listOfCurrency.forEach((e) => {
+          if ((matchingHelper(input, e.Symbol) || matchingHelper(input, e.FullName))&&this.hintList.length<4) {
+            this.hintList.push(e);
+          }
+        });
+      }
+      console.log(this.hintList);
     }
   },
   async mounted() {
@@ -248,9 +273,10 @@ export default {
     };
 
     const f = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true");
-    const response = f.json();
-    this.listOfCurrency = response;
-    console.log(this.listOfCurrency);
+    const response = await f.json();
+    this.listOfCurrency = Object.keys(response.Data).map((key) => {
+      return response.Data[key];
+    });
   }
 };
 </script>

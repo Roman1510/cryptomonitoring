@@ -139,7 +139,7 @@
           <div
             v-for="(bar,idx) in normalizeGraph()"
             :key="idx"
-            :style="{height: `${bar}%`}"
+            :style="{height: `${bar? bar: 5}%`}"
             class="bg-purple-800 border w-10"
           />
         </div>
@@ -209,7 +209,7 @@ export default {
         if (this.chosenCoin?.name == newCoin.name) {
           this.graph.push(data.EUR);
         }
-      }, 6000);
+      }, 5100);
     },
     deleteCoin(toDelete) {
       this.coins = this.coins.filter(e => e !== toDelete);
@@ -221,9 +221,7 @@ export default {
 
       return this.graph.map(
         (price) => {
-          console.log(`this is price ${price}, this is minValue ${minValue}, this is maxValue ${maxValue}
-            this is the finalsum: ${5 + (((price - minValue) * 95) / (maxValue))}
-          `);
+          console.log(5 + (((price - minValue) * 95) / (maxValue - minValue)))
           return 5 + (((price - minValue) * 95) / (maxValue - minValue));
         }
       );
@@ -245,7 +243,7 @@ export default {
       if (document.readyState == "complete") {
         setTimeout(() => {
           this.isLoaded = true;
-        }, 250);
+        }, 100);
       }
     };
 

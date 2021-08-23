@@ -183,7 +183,7 @@ export default {
       isLoaded: false, //for the loader
       api_key: process.env.VUE_APP_API_KEY, //api key
       coinInput: "", //for the input
-      coins: [], //list of the tracked coins
+      coins: this.subscribeAPI(JSON.parse(localStorage.getItem('coins'))) || [], //list of the tracked coins
       chosenCoin: null, //chosen coin to track using the graph
       graph: [], // the graph itself
       listOfCurrency: [], // the list where i filter the hints from
@@ -192,7 +192,21 @@ export default {
     };
   },
   methods: {
+    subscribeAPI(coins){
+      coins?.forEach((localCoin)=>{
+        setInterval(async () => {
+          const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${localCoin.name}&tsyms=EUR&api_key=${this.api_key}`);
+          const data = await f.json();
 
+          this.coins.find((e) => e.name === localCoin.name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
+          console.log(data.EUR);
+          if (this.chosenCoin?.name === localCoin.name) {
+            this.graph.push(data.EUR);
+          }
+        }, 5100);
+      })
+      return coins
+    },
     addCoin() {
       this.hintList = [];
       const newCoin = {
@@ -216,6 +230,9 @@ export default {
             this.graph.push(data.EUR);
           }
         }, 5100);
+        localStorage.setItem('coins',JSON.stringify(this.coins.map((e)=>{
+          return {name: e.name}
+        })))
 
       } else {
         this.alreadyExists = true;
@@ -224,6 +241,9 @@ export default {
     deleteCoin(toDelete) {
       this.coins = this.coins.filter(e => e !== toDelete);
       this.chosenCoin = null;
+      localStorage.setItem('coins',JSON.stringify(this.coins.map((e)=>{
+        return {name: e.name}
+      })))
     },
     normalizeGraph() {
       const maxValue = Math.max(...this.graph);

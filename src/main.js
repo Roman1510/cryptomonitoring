@@ -1,5 +1,7 @@
-import { createApp } from "vue";
+import {createApp} from "vue";
 import App from "./App.vue";
 import "./assets/tailwind.css";
 
-createApp(App).mount("#app");
+const myApp =  createApp(App)
+myApp.config.globalProperties.customProps = []
+myApp.mount("#app")

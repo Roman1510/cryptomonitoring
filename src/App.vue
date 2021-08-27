@@ -188,12 +188,15 @@
 </template>
 
 <script>
-    // 1. repetitive code in watch | 3
-    // 2. when deleting there's subscription that remains |5
-    // 3. quantity of requests
-    // 4. magical texts and digits (url, 5000, ls key, count per page)
-    // 5.
-    // 6.
+    // 1. there are dependent data in  state
+    // 2. requests directly in the component
+    // 3. deleting => subscription is in place still
+    // 4. api error handling
+    // 5. request quantity
+    // 6. repetitive code in watch
+    // 7. localstorage and incognito pages
+    // 8. graph is not ok
+    // 9. magical variables => url, 500, storage key etc.
     export default {
         name: "App",
         data() {

@@ -188,6 +188,12 @@
 </template>
 
 <script>
+    // 1. repetitive code in watch | 3
+    // 2. when deleting there's subscription that remains |5
+    // 3.
+    // 4.
+    // 5.
+    // 6.
     export default {
         name: "App",
         data() {

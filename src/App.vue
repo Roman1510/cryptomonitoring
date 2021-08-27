@@ -190,8 +190,8 @@
 <script>
     // 1. repetitive code in watch | 3
     // 2. when deleting there's subscription that remains |5
-    // 3.
-    // 4.
+    // 3. quantity of requests
+    // 4. magical texts and digits (url, 5000, ls key, count per page)
     // 5.
     // 6.
     export default {

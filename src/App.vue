@@ -93,7 +93,7 @@
                   class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
             Back
           </button>
-          <button v-if="hasNextPages" @click="page=page+1"
+          <button v-if="hasNextPage" @click="page=page+1"
                   class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
             Next
           </button>
@@ -103,7 +103,7 @@
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
             @click="select(item)"
-            v-for="(item,idx) in filteredCoins()"
+            v-for="(item,idx) in filteredCoins"
             :key="idx"
             :class="{'border-4':item==chosenCoin}"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
@@ -149,7 +149,7 @@
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-            v-for="(bar,idx) in normalizeGraph()"
+            v-for="(bar,idx) in normalizedGraph"
             :key="idx"
             :style="{height: `${bar? bar: 5}%`}"
             class="bg-purple-800 border w-10"
@@ -201,7 +201,7 @@
 
 // in parallel
 //  [ ! ]  graph is broken when there's equal values
-// [ ! ] when deleting a coin our choice is still there
+// [ * ] when deleting a coin our choice is still there
 export default {
   name: "App",
   data() {
@@ -216,8 +216,7 @@ export default {
       alreadyExists: false, // flag for showing error message
       hintList: [],
       filter: "",
-      page: 1,
-      hasNextPages: true
+      page: 1
     };
   },
   methods: {
@@ -294,7 +293,28 @@ export default {
         }
       }, 5100);
     },
-    normalizeGraph() {
+    loadingAnimation() {
+      document.onreadystatechange = () => {
+        if (document.readyState == "complete") {
+          setTimeout(() => {
+            this.isLoaded = true;
+          }, 100);
+        }
+      };
+    }
+
+  },
+  computed:{
+    startIndex(){
+      return (this.page-1)*6
+    },
+    endIndex(){
+      return this.page*6
+    },
+    hasNextPage(){
+      return this.filteredCoins.length>this.endIndex
+    },
+    normalizedGraph() {
       const maxValue = Math.max(...this.graph);
       const minValue = Math.min(...this.graph);
 
@@ -304,22 +324,10 @@ export default {
         }
       );
     },
-    loadingAnimation() {
-      document.onreadystatechange = () => {
-        if (document.readyState == "complete") {
-          setTimeout(() => {
-            this.isLoaded = true;
-          }, 100);
-        }
-      };
-    },
     filteredCoins() {
-      const start = (this.page - 1) * 6;
-      const end = this.page * 6;
       const filteredCoins = this.coins.filter((coin) => coin.name.includes(this.filter));
-      console.log(this.coins.length, end);
-      this.hasNextPages = filteredCoins.length > end;
-      return filteredCoins.slice(start, end);
+      console.log(this.coins.length, this.endIndex);
+      return filteredCoins.slice(this.startIndex, this.endIndex);
     }
   },
   async created() {

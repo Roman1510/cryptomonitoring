@@ -37,7 +37,7 @@
             >Currency</label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input
-                @input="handleChange(coinInput)"
+                @input="handleChange"
                 @keydown.enter="addCoin"
                 v-model="coinInput"
                 type="text"
@@ -225,20 +225,7 @@ export default {
       this.hintList = [];
       this.coinInput = hint;
     },
-    handleChange(input) {
-      this.alreadyExists = false;
-      const matchingHelper = (input, string) => {
-        return string.toLowerCase().includes(input.toLowerCase());
-      };
-      this.hintList = [];
-      if (input) {
-        this.listOfCurrency.forEach((e) => {
-          if ((matchingHelper(input, e.Symbol) || matchingHelper(input, e.FullName)) && this.hintList.length < 4) {
-            this.hintList.push(e);
-          }
-        });
-      }
-    },
+
     //coin operations
     addCoin() {
       this.hintList = [];
@@ -304,19 +291,37 @@ export default {
     }
 
   },
-  computed:{
-    startIndex(){
-      return (this.page-1)*6
+  computed: {
+    handleChange() {
+      this.alreadyExists = false;
+      const matchingHelper = (input, string) => {
+        return string.toLowerCase().includes(this.coinInput.toLowerCase());
+      };
+      this.hintList = [];
+      if (this.coinInput) {
+        this.listOfCurrency.forEach((e) => {
+          if ((matchingHelper(this.coinInput, e.Symbol) || matchingHelper(this.coinInput, e.FullName)) && this.hintList.length < 4) {
+            this.hintList.push(e);
+          }
+        });
+      }
     },
-    endIndex(){
-      return this.page*6
+    startIndex() {
+      return (this.page - 1) * 6;
     },
-    hasNextPage(){
-      return this.filteredCoins.length>this.endIndex
+    endIndex() {
+      return this.page * 6;
+    },
+    hasNextPage() {
+      return this.filteredCoins.length > this.endIndex;
     },
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
       const minValue = Math.min(...this.graph);
+
+      if (maxValue === minValue) {
+        return this.graph.map(() => 50);
+      }
 
       return this.graph.map(
         (price) => {
@@ -358,7 +363,7 @@ export default {
   },
   watch: {
     chosenCoin() {
-      this.graph=[]
+      this.graph = [];
     },
     filter() {
       this.page = 1;

@@ -46,11 +46,11 @@
                 placeholder="e.g. DOGE"
               >
             </div>
-            <div v-if="handleChange.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+            <div v-if="hintsList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
               <span
                 @click="selectHint(hint.Symbol)"
                 :key="hint"
-                v-for="hint in handleChange"
+                v-for="hint in hintsList"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
                 {{ hint.Symbol }}
@@ -220,7 +220,6 @@ export default {
   methods: {
     //input
     selectHint(hint) {
-      this.hintList = [];
       this.coinInput = hint;
     },
     //coin operations
@@ -288,7 +287,7 @@ export default {
 
   },
   computed: {
-    handleChange() {
+    hintsList() {
       this.alreadyExists = false;
       let result = []
       const matchingHelper = (input, string) => {

@@ -37,7 +37,6 @@
             >Currency</label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input
-                @input="handleChange"
                 @keydown.enter="addCoin"
                 v-model="coinInput"
                 type="text"
@@ -47,11 +46,11 @@
                 placeholder="e.g. DOGE"
               >
             </div>
-            <div v-if="hintList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+            <div v-if="handleChange.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
               <span
                 @click="selectHint(hint.Symbol)"
                 :key="hint"
-                v-for="hint in hintList"
+                v-for="hint in handleChange"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
                 {{ hint.Symbol }}
@@ -214,7 +213,6 @@ export default {
       graph: [], // the graph itself
       listOfCurrency: [], // the list where i filter the hints from
       alreadyExists: false, // flag for showing error message
-      hintList: [],
       filter: "",
       page: 1
     };
@@ -225,7 +223,6 @@ export default {
       this.hintList = [];
       this.coinInput = hint;
     },
-
     //coin operations
     addCoin() {
       this.hintList = [];
@@ -294,17 +291,19 @@ export default {
   computed: {
     handleChange() {
       this.alreadyExists = false;
+      let result = []
       const matchingHelper = (input, string) => {
         return string.toLowerCase().includes(this.coinInput.toLowerCase());
       };
-      this.hintList = [];
       if (this.coinInput) {
         this.listOfCurrency.forEach((e) => {
-          if ((matchingHelper(this.coinInput, e.Symbol) || matchingHelper(this.coinInput, e.FullName)) && this.hintList.length < 4) {
-            this.hintList.push(e);
+          if ((matchingHelper(this.coinInput, e.Symbol) || matchingHelper(this.coinInput, e.FullName)) && result.length < 4) {
+            result.push(e);
           }
         });
       }
+      return result
+
     },
     startIndex() {
       return (this.page - 1) * 6;
@@ -313,7 +312,7 @@ export default {
       return this.page * 6;
     },
     hasNextPage() {
-      return this.filteredCoins.length > this.endIndex;
+      return this.filteredCoins.length > this.endIndex-1;
     },
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
@@ -330,14 +329,13 @@ export default {
       );
     },
     filteredCoins() {
-      const filteredCoins = this.coins.filter((coin) => coin.name.includes(this.filter));
-      console.log(this.coins.length, this.endIndex);
-      return filteredCoins.slice(this.startIndex, this.endIndex);
+      const filtered = this.coins.filter((coin) => coin.name.includes(this.filter));
+      return filtered.slice(this.startIndex, this.endIndex);
     }
   },
   async created() {
     this.loadingAnimation();
-
+    console.log(typeof this.page)
     const f = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true");
     const response = await f.json();
     this.listOfCurrency = Object.keys(response.Data).map((key) => {
@@ -355,12 +353,12 @@ export default {
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
 
     if (filter) {
-      this.filter = filter;
+      this.filter = +filter;
     }
     if (page) {
-      this.page = page;
+      this.page = +page;
     }
-  },
+  }, // don't touch
   watch: {
     chosenCoin() {
       this.graph = [];

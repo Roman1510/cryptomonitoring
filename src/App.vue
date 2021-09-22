@@ -225,7 +225,6 @@ export default {
     },
     //coin operations
     addCoin() {
-      this.hintList = [];
       this.filter = "";
       const newCoin = {
         name: this.coinInput.toUpperCase(),

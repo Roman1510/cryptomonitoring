@@ -211,7 +211,7 @@ export default {
       coins: [], //list of the tracked coins
       chosenCoin: null, //chosen coin to track using the graph
       graph: [], // the graph itself
-      listOfCurrency: [], // the list where i filter the hints from
+      listOfCurrency: [], // the list where i filter the hints from (the local list from the api)
       alreadyExists: false, // flag for showing error message
       filter: "",
       page: 1

@@ -88,13 +88,13 @@
           Filter: <input v-model="filter"
                          class="inline w-0.2 pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                          type="text" />
-          <button v-if="page>1" @click="page=page-1"
-                  class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-            Back
-          </button>
           <button v-if="hasNextPage" @click="page=page+1"
                   class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
             Next
+          </button>
+          <button v-if="page>1" @click="page=page-1"
+                  class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            Back
           </button>
 
         </div>
@@ -102,7 +102,7 @@
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
             @click="select(item)"
-            v-for="(item,idx) in filteredCoins"
+            v-for="(item,idx) in paginatedCoins"
             :key="idx"
             :class="{'border-4':item==chosenCoin}"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
@@ -304,13 +304,19 @@ export default {
 
     },
     startIndex() {
-      return (this.page - 1) * 6;
+      return (this.page - 1) * 3;
     },
     endIndex() {
-      return this.page * 6;
+      return this.page * 3;
+    },
+    filteredCoins() {
+      return this.coins.filter((coin) => coin.name.includes(this.filter));
+    },
+    paginatedCoins(){
+      return this.filteredCoins.slice(this.startIndex,this.endIndex)
     },
     hasNextPage() {
-      return this.filteredCoins.length > this.endIndex-1;
+      return this.filteredCoins.length > this.endIndex;
     },
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
@@ -326,14 +332,9 @@ export default {
         }
       );
     },
-    filteredCoins() {
-      const filtered = this.coins.filter((coin) => coin.name.includes(this.filter));
-      return filtered.slice(this.startIndex, this.endIndex);
-    }
   },
   async created() {
     this.loadingAnimation();
-    console.log(typeof this.page)
     const f = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true");
     const response = await f.json();
     this.listOfCurrency = Object.keys(response.Data).map((key) => {
@@ -347,16 +348,14 @@ export default {
         this.subscribeAPI(coin.name);
       });
     }
-
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
-
     if (filter) {
       this.filter = +filter;
     }
     if (page) {
       this.page = +page;
     }
-  }, // don't touch
+  },
   watch: {
     chosenCoin() {
       this.graph = [];

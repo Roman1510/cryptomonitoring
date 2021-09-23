@@ -357,6 +357,11 @@ export default {
     }
   },
   watch: {
+    paginatedCoins(){
+      if(this.paginatedCoins.length===0&&this.page>1){
+        this.page-=1
+      }
+    },
     chosenCoin() {
       this.graph = [];
     },

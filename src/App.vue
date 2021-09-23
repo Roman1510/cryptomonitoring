@@ -336,6 +336,12 @@ export default {
         }
       );
     },
+    computeProps(){
+      return {
+        filter: this.filter,
+        page: this.page
+      }
+    }
   },
   async created() {
     this.loadingAnimation();
@@ -361,6 +367,12 @@ export default {
     }
   },
   watch: {
+    computeProps(value){
+      if(value.filter){
+        this.page=1
+      }
+      history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`);
+    },
     paginatedCoins(){
       if(this.paginatedCoins.length===0&&this.page>1){
         this.page-=1
@@ -369,13 +381,6 @@ export default {
     chosenCoin() {
       this.graph = [];
     },
-    filter() {
-      this.page = 1;
-      history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
-    },
-    page() {
-      history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
-    }
   }
 };
 </script>

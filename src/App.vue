@@ -200,7 +200,7 @@
 
 // in parallel
 //  [ ! ]  graph is broken when there's equal values
-// [ * ] when deleting a coin our choice is still there
+//  [ * ] when deleting a coin our choice is still there
 export default {
   name: "App",
   data() {
@@ -217,6 +217,8 @@ export default {
       page: 1
     };
   },
+  //что нужно доделать
+  // 1.вынести логику обновления локального хранения в watch 2.объединить логику page,filter
   methods: {
     //input
     selectHint(hint) {
@@ -255,7 +257,9 @@ export default {
     },
     deleteCoin(toDelete) {
       this.coins = this.coins.filter(e => e !== toDelete);
-      this.chosenCoin = null;
+      if(this.chosenCoin===toDelete){
+        this.chosenCoin = null;
+      }
       localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
         return { name: e.name };
       })));
@@ -309,14 +313,14 @@ export default {
     endIndex() {
       return this.page * 3;
     },
+    hasNextPage() {
+      return this.filteredCoins.length > this.endIndex;
+    },
     filteredCoins() {
       return this.coins.filter((coin) => coin.name.includes(this.filter));
     },
     paginatedCoins(){
       return this.filteredCoins.slice(this.startIndex,this.endIndex)
-    },
-    hasNextPage() {
-      return this.filteredCoins.length > this.endIndex;
     },
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);

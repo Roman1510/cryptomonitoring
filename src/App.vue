@@ -187,19 +187,19 @@
 </template>
 
 <script>
-//  [ ! ] 1. there are dependent data in  state
+//  [ * ] 1. there are dependent data in  state
 //  [ ] 2. requests directly in the component
 //  [ ] 3. deleting => subscription is in place still
 //  [ ] 4. api error handling
 //  [ ] 5. request quantity
-//  [ !] 6. when deleting a coin localstorage isn't changed
-//  [ ! ] 7. repetitive code in watch
+//  [ *] 6. when deleting a coin localstorage isn't changed
+//  [ * ] 7. repetitive code in watch
 //  [ ] 8. localstorage and incognito pages
 //  [ ]  9. graph is not ok, when there are too many prices
 //  [ ] 10. magical variables => url, 500, storage key etc.
 
 // in parallel
-//  [ ! ]  graph is broken when there's equal values
+//  [ * ]  graph is broken when there's equal values
 //  [ * ] when deleting a coin our choice is still there
 export default {
   name: "App",

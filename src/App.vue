@@ -235,7 +235,8 @@ export default {
         return e.name === newCoin.name;
       });
       if (!found) {
-        this.coins.push(newCoin);
+        // this.coins.push(newCoin); i cannot do like this, because push doesn't make the array "new"
+        this.coins = [...this.coins, newCoin]
         //here I reset the input
         this.coinInput = "";
         setInterval(async () => {
@@ -247,22 +248,16 @@ export default {
             this.graph.push(data.EUR);
           }
         }, 5100);
-        localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
-          return { name: e.name };
-        })));
 
       } else {
         this.alreadyExists = true;
       }
     },
     deleteCoin(toDelete) {
-      this.coins = this.coins.filter(e => e !== toDelete);
+      this.coins = this.coins.filter(e => e !== toDelete); //тут идет переприсваивание, поэтому ссылка обновляется на массив, он становится "новый"
       if(this.chosenCoin===toDelete){
         this.chosenCoin = null;
       }
-      localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
-        return { name: e.name };
-      })));
     },
     select(current) {
       this.chosenCoin = current;
@@ -377,6 +372,11 @@ export default {
       if(this.paginatedCoins.length===0&&this.page>1){
         this.page-=1
       }
+    },
+    coins(){
+      localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
+        return { name: e.name };
+      })));
     },
     chosenCoin() {
       this.graph = [];

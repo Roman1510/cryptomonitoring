@@ -201,6 +201,8 @@
 // in parallel
 //  [ * ]  graph is broken when there's equal values
 //  [ * ] when deleting a coin our choice is still there
+
+import { listOfCurrency } from "./listOfCurrency";
 export default {
   name: "App",
   data() {
@@ -282,8 +284,14 @@ export default {
           }, 100);
         }
       };
+    },
+    async fetchFullList(){
+      const response = await listOfCurrency() //here i fetch the list of all cryptos
+      console.log(response)
+      this.listOfCurrency = Object.keys(response.Data).map((key) => {
+        return response.Data[key];
+      });
     }
-
   },
   computed: {
     hintsList() {
@@ -338,13 +346,9 @@ export default {
       }
     }
   },
-  async created() {
+  created() {
     this.loadingAnimation();
-    const f = await fetch("https://min-api.cryptocompare.com/data/all/coinlist?summary=true");
-    const response = await f.json();
-    this.listOfCurrency = Object.keys(response.Data).map((key) => {
-      return response.Data[key];
-    });
+    this.fetchFullList()
 
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
@@ -353,6 +357,7 @@ export default {
         this.subscribeAPI(coin.name);
       });
     }
+    /* in const {...} we specify VALID_KEYS*/
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
     if (filter) {
       this.filter = +filter;

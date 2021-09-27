@@ -219,8 +219,6 @@ export default {
       page: 1
     };
   },
-  //что нужно доделать
-  // 1.вынести логику обновления локального хранения в watch 2.объединить логику page,filter
   methods: {
     //input
     selectHint(hint) {

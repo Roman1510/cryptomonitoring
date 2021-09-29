@@ -203,6 +203,7 @@
 //  [ * ] when deleting a coin our choice is still there
 
 import { listOfCurrency } from "./listOfCurrency";
+import { loadCurrencyData } from "./api.js";
 export default {
   name: "App",
   data() {
@@ -235,19 +236,9 @@ export default {
         return e.name === newCoin.name;
       });
       if (!found) {
-        // this.coins.push(newCoin); i cannot do like this, because push doesn't make the array "new"
         this.coins = [...this.coins, newCoin]
-        //here I reset the input
         this.coinInput = "";
-        setInterval(async () => {
-          const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newCoin.name}&tsyms=EUR&api_key=${this.api_key}`);
-          const data = await f.json();
-
-          this.coins.find((e) => e.name === newCoin.name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
-          if (this.chosenCoin?.name == newCoin.name) {
-            this.graph.push(data.EUR);
-          }
-        }, 5100);
+        this.subscribeAPI(newCoin.name)
 
       } else {
         this.alreadyExists = true;
@@ -309,10 +300,10 @@ export default {
 
     },
     startIndex() {
-      return (this.page - 1) * 3;
+      return (this.page - 1) * 6;
     },
     endIndex() {
-      return this.page * 3;
+      return this.page * 6;
     },
     hasNextPage() {
       return this.filteredCoins.length > this.endIndex;

@@ -204,6 +204,7 @@
 
 import { listOfCurrency } from "./listOfCurrency";
 import { loadCurrencyData } from "./api.js";
+
 export default {
   name: "App",
   data() {
@@ -236,9 +237,9 @@ export default {
         return e.name === newCoin.name;
       });
       if (!found) {
-        this.coins = [...this.coins, newCoin]
+        this.coins = [...this.coins, newCoin];
         this.coinInput = "";
-        this.subscribeAPI(newCoin.name)
+        this.subscribeAPI(newCoin.name);
 
       } else {
         this.alreadyExists = true;
@@ -246,7 +247,7 @@ export default {
     },
     deleteCoin(toDelete) {
       this.coins = this.coins.filter(e => e !== toDelete); //тут идет переприсваивание, поэтому ссылка обновляется на массив, он становится "новый"
-      if(this.chosenCoin===toDelete){
+      if (this.chosenCoin === toDelete) {
         this.chosenCoin = null;
       }
     },
@@ -256,8 +257,7 @@ export default {
     //miscellaneous
     subscribeAPI(name) {
       setInterval(async () => {
-        const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${name}&tsyms=EUR&api_key=${this.api_key}`);
-        const data = await f.json();
+        const data = await loadCurrencyData(this.api_key, name);
         if (!this.coins.find((e) => e.name === name).price)
           this.coins.find((e) => e.name === name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
         if (this.chosenCoin?.name === name) {
@@ -274,9 +274,9 @@ export default {
         }
       };
     },
-    async fetchFullList(){
-      const response = await listOfCurrency() //here i fetch the list of all cryptos
-      console.log(response)
+    async fetchFullList() {
+      const response = await listOfCurrency(); //here i fetch the list of all cryptos
+      console.log(response);
       this.listOfCurrency = Object.keys(response.Data).map((key) => {
         return response.Data[key];
       });
@@ -285,7 +285,7 @@ export default {
   computed: {
     hintsList() {
       this.alreadyExists = false;
-      let result = []
+      let result = [];
       const matchingHelper = (input, string) => {
         return string.toLowerCase().includes(this.coinInput.toLowerCase());
       };
@@ -296,7 +296,7 @@ export default {
           }
         });
       }
-      return result
+      return result;
 
     },
     startIndex() {
@@ -311,8 +311,8 @@ export default {
     filteredCoins() {
       return this.coins.filter((coin) => coin.name.includes(this.filter));
     },
-    paginatedCoins(){
-      return this.filteredCoins.slice(this.startIndex,this.endIndex)
+    paginatedCoins() {
+      return this.filteredCoins.slice(this.startIndex, this.endIndex);
     },
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
@@ -328,16 +328,16 @@ export default {
         }
       );
     },
-    computeProps(){
+    computeProps() {
       return {
         filter: this.filter,
         page: this.page
-      }
+      };
     }
   },
   created() {
     this.loadingAnimation();
-    this.fetchFullList()
+    this.fetchFullList();
 
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
@@ -356,25 +356,25 @@ export default {
     }
   },
   watch: {
-    computeProps(value){
-      if(value.filter){
-        this.page=1
+    computeProps(value) {
+      if (value.filter) {
+        this.page = 1;
       }
       history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`);
     },
-    paginatedCoins(){
-      if(this.paginatedCoins.length===0&&this.page>1){
-        this.page-=1
+    paginatedCoins() {
+      if (this.paginatedCoins.length === 0 && this.page > 1) {
+        this.page -= 1;
       }
     },
-    coins(){
+    coins() {
       localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
         return { name: e.name };
       })));
     },
     chosenCoin() {
       this.graph = [];
-    },
+    }
   }
 };
 </script>

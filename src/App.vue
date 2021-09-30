@@ -238,9 +238,8 @@ export default {
       });
       if (!found) {
         this.coins = [...this.coins, newCoin];
+        this.updateData(newCoin.name);
         this.coinInput = "";
-        this.subscribeAPI(newCoin.name);
-
       } else {
         this.alreadyExists = true;
       }
@@ -255,15 +254,25 @@ export default {
       this.chosenCoin = current;
     },
     //miscellaneous
-    subscribeAPI(name) {
-      setInterval(async () => {
-        const data = await loadCurrencyData(this.api_key, name);
-        if (!this.coins.find((e) => e.name === name).price)
-          this.coins.find((e) => e.name === name).price = data.EUR > 1 ? data.EUR.toFixed(2) : data.EUR.toPrecision(2);
-        if (this.chosenCoin?.name === name) {
-          this.graph.push(data.EUR);
+    async updateData() {
+      if (!this.coins.length) {
+        return;
+      }
+      const exchangeData = await loadCurrencyData(this.api_key, this.coins.map(e => e.name));
+      console.log(exchangeData);
+      this.coins.forEach(coin => {
+
+        const price = exchangeData[coin.name.toUpperCase()];
+        if (!price) {
+          coin.price = "-";
+          return;
         }
-      }, 5100);
+        const normalizedPrice = 1 / price;
+        const formattedPrice = normalizedPrice > 1 ? normalizedPrice.toFixed(2) : normalizedPrice.toPrecision(2);
+        coin.price = formattedPrice;
+      });
+
+
     },
     loadingAnimation() {
       document.onreadystatechange = () => {
@@ -275,8 +284,7 @@ export default {
       };
     },
     async fetchFullList() {
-      const response = await listOfCurrency(); //here i fetch the list of all cryptos
-      console.log(response);
+      const response = await listOfCurrency();
       this.listOfCurrency = Object.keys(response.Data).map((key) => {
         return response.Data[key];
       });
@@ -342,10 +350,9 @@ export default {
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
       this.coins = JSON.parse(coinsData);
-      this.coins?.forEach((coin) => {
-        this.subscribeAPI(coin.name);
-      });
     }
+
+    setInterval(this.updateData, 5000);
     /* in const {...} we specify VALID_KEYS*/
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
     if (filter) {

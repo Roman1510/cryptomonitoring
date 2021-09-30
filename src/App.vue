@@ -112,7 +112,7 @@
                 {{ item.name }}
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ item.price }} - EUR
+                {{ formatPrice(item.price) }} - EUR
               </dd>
             </div>
             <div class="w-full border-t border-gray-200" />
@@ -254,22 +254,20 @@ export default {
       this.chosenCoin = current;
     },
     //miscellaneous
+    formatPrice(price){
+      if(!price){
+        return
+      }
+      return price > 1 ? price.toFixed(2) : price.toPrecision(2);
+    },
     async updateData() {
       if (!this.coins.length) {
         return;
       }
       const exchangeData = await loadCurrencyData(this.api_key, this.coins.map(e => e.name));
-      console.log(exchangeData);
       this.coins.forEach(coin => {
-
         const price = exchangeData[coin.name.toUpperCase()];
-        if (!price) {
-          coin.price = "-";
-          return;
-        }
-        const normalizedPrice = 1 / price;
-        const formattedPrice = normalizedPrice > 1 ? normalizedPrice.toFixed(2) : normalizedPrice.toPrecision(2);
-        coin.price = formattedPrice;
+        coin.price = price
       });
 
 

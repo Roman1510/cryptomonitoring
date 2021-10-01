@@ -201,7 +201,6 @@
 // in parallel
 //  [ * ]  graph is broken when there's equal values
 //  [ * ] when deleting a coin our choice is still there
-
 import { listOfCurrency } from "./listOfCurrency";
 import { loadCurrencyData } from "./api.js";
 

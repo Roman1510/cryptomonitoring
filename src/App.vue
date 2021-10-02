@@ -253,9 +253,9 @@ export default {
       this.chosenCoin = current;
     },
     //miscellaneous
-    formatPrice(price){
-      if(!price||price==='-'){
-        return "-"
+    formatPrice(price) {
+      if (!price || price === "-") {
+        return "-";
       }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
@@ -266,10 +266,8 @@ export default {
       const exchangeData = await loadCurrencyData(this.api_key, this.coins.map(e => e.name));
       this.coins.forEach(coin => {
         const price = exchangeData[coin.name.toUpperCase()];
-        coin.price = price||"-"
+        coin.price = price || "-";
       });
-
-
     },
     loadingAnimation() {
       document.onreadystatechange = () => {

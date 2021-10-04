@@ -185,7 +185,6 @@
     </div>
   </div>
 </template>
-
 <script>
 //  [ * ] 1. there are dependent data in  state
 //  [ ] 2. requests directly in the component

@@ -188,7 +188,7 @@
 <script>
 //  [ * ] 1. there are dependent data in  state
 //  [ ] 2. requests directly in the component
-//  [ ] 3. deleting => subscription is in place still
+//  [ * ] 3. deleting => subscription is in place still
 //  [ ] 4. api error handling
 //  [ ] 5. request quantity
 //  [ *] 6. when deleting a coin localstorage isn't changed
@@ -201,7 +201,7 @@
 //  [ * ]  graph is broken when there's equal values
 //  [ * ] when deleting a coin our choice is still there
 import { listOfCurrency } from "./listOfCurrency";
-import { loadCurrencyData } from "./api.js";
+import { loadCurrencyData, subscribeToCurrency, unsubscribeFromCurrency } from "./api.js";
 
 export default {
   name: "App",
@@ -220,11 +220,9 @@ export default {
     };
   },
   methods: {
-    //input
     selectHint(hint) {
       this.coinInput = hint;
     },
-    //coin operations
     addCoin() {
       this.filter = "";
       const newCoin = {
@@ -243,7 +241,7 @@ export default {
       }
     },
     deleteCoin(toDelete) {
-      this.coins = this.coins.filter(e => e !== toDelete); //тут идет переприсваивание, поэтому ссылка обновляется на массив, он становится "новый"
+      this.coins = this.coins.filter(e => e !== toDelete);
       if (this.chosenCoin === toDelete) {
         this.chosenCoin = null;
       }
@@ -251,7 +249,6 @@ export default {
     select(current) {
       this.chosenCoin = current;
     },
-    //miscellaneous
     formatPrice(price) {
       if (!price || price === "-") {
         return "-";
@@ -299,7 +296,6 @@ export default {
         });
       }
       return result;
-
     },
     startIndex() {
       return (this.page - 1) * 6;
@@ -319,11 +315,9 @@ export default {
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
       const minValue = Math.min(...this.graph);
-
       if (maxValue === minValue) {
         return this.graph.map(() => 50);
       }
-
       return this.graph.map(
         (price) => {
           return 5 + (((price - minValue) * 95) / (maxValue - minValue));
@@ -340,12 +334,10 @@ export default {
   created() {
     this.loadingAnimation();
     this.fetchFullList();
-
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
       this.coins = JSON.parse(coinsData);
     }
-
     setInterval(this.updateData, 5000);
     /* in const {...} we specify VALID_KEYS*/
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());

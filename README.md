@@ -1,25 +1,11 @@
-# vue-cryptomonitoring
+# Hello, this is a project in which the Cryptocompare API is mainly used to create such a beautiful interface
+## Usage
+ Just use the input field to find the needed currency. All the currencies will be remained if you close the tab, so don't worry. 
 
-## Project setup
-```
-npm install
-```
+### Filtering
+ You can also use filters to filter your list
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+### This project was made purely for fun, for personal usage
+ Here some ~Vue3~ knowledge is applied which I managed to acquire
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
-# cryptomonitoring
+#Enjoy xD

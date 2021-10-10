@@ -13,9 +13,12 @@ socket.addEventListener('message',(e)=>{
   handlers.forEach(fn => fn(newPrice));
 
 })
-
-//to get the list of crypto pairs from the API?
-//to constantly get the updates of costs of crypto pairs from the API
+// {
+//   "TYPE": "429",
+//   "MESSAGE": "TOO_MANY_SOCKETS_MAX_1_PER_CLIENT",
+//   "INFO": "You have reached your maximum sockets open for your subscription"
+// }
+//this shit needs to be fixed
 
 function sendToWS(message){
   const stringifiedMessage = JSON.stringify(message)
@@ -33,6 +36,12 @@ function subscribeOnWS(currency){
     subs:[`5~CCCAGG~${currency}~EUR`]
   })
 }
+function unsubscribeOnWS(currency){
+  sendToWS({
+    action: "SubRemove",
+    subs:[`5~CCCAGG~${currency}~EUR`]
+  })
+}
 export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
   currenciesHandlers.set(currency, [...subscribers, cb]);
@@ -41,6 +50,7 @@ export const subscribeToCurrency = (currency, cb) => {
 
 export const unsubscribeFromCurrency = currency => {
   currenciesHandlers.delete(currency);
+  unsubscribeOnWS(currency)
 };
 
 

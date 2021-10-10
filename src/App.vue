@@ -235,7 +235,9 @@ export default {
       if (!found) {
         this.coins = [...this.coins, newCoin];
         this.updateData(newCoin.name);
+        subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
         this.coinInput = "";
+
       } else {
         this.alreadyExists = true;
       }
@@ -245,6 +247,7 @@ export default {
       if (this.chosenCoin === toDelete) {
         this.chosenCoin = null;
       }
+      unsubscribeFromCurrency(toDelete.name)
     },
     select(current) {
       this.chosenCoin = current;
@@ -255,15 +258,18 @@ export default {
       }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
+    updateCoin(coinName,price){
+       this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{coin.price = price})
+    },
     async updateData() {
-      if (!this.coins.length) {
-        return;
-      }
-      const exchangeData = await loadCurrencyData(this.api_key, this.coins.map(e => e.name));
-      this.coins.forEach(coin => {
-        const price = exchangeData[coin.name.toUpperCase()];
-        coin.price = price || "-";
-      });
+      // if (!this.coins.length) {
+      //   return;
+      // }
+      //
+      // this.coins.forEach(coin => {
+      //   const price = exchangeData[coin.name.toUpperCase()];
+      //   coin.price = price || "-";
+      // });
     },
     loadingAnimation() {
       document.onreadystatechange = () => {
@@ -337,6 +343,9 @@ export default {
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
       this.coins = JSON.parse(coinsData);
+      this.coins.forEach(coin=>{
+        subscribeToCurrency(coin.name, (newPrice)=>this.updateCoin(coin.name,newPrice))
+      })
     }
     setInterval(this.updateData, 5000);
     /* in const {...} we specify VALID_KEYS*/

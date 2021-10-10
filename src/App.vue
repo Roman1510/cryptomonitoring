@@ -201,14 +201,13 @@
 //  [ * ]  graph is broken when there's equal values
 //  [ * ] when deleting a coin our choice is still there
 import { listOfCurrency } from "./listOfCurrency";
-import { loadCurrencyData, subscribeToCurrency, unsubscribeFromCurrency } from "./api.js";
+import { subscribeToCurrency, unsubscribeFromCurrency } from "./api.js";
 
 export default {
   name: "App",
   data() {
     return {
       isLoaded: false, //for the loader
-      api_key: process.env.VUE_APP_API_KEY, //api key
       coinInput: "", //for the input
       coins: [], //list of the tracked coins
       chosenCoin: null, //chosen coin to track using the graph

@@ -34,4 +34,4 @@ export const unsubscribeFromCurrency = currency => {
 
 setInterval(loadCurrencyData, 5000);
 
-window.currencies = currenciesHandlers;
+window.tickers = currenciesHandlers;

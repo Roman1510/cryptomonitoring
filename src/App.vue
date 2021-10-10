@@ -235,8 +235,8 @@ export default {
       if (!found) {
         this.coins = [...this.coins, newCoin];
         this.updateData(newCoin.name);
-        subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
         this.coinInput = "";
+        subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
 
       } else {
         this.alreadyExists = true;

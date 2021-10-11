@@ -5,13 +5,13 @@ const AGGREGATE_INDEX = "5";
 const bc = new BroadcastChannel('wsdata')
 bc.onmessage = ev => {
   if(ev.data){
+    console.log(ev.data)
     const handlers = currenciesHandlers.get(ev.data.currency) ?? [];
     if (ev.data.newPrice) {
       handlers.forEach(fn => fn(ev.data.newPrice));
     }
   }
 }
-
 const socket =  new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
 socket?.addEventListener("message", (e) => {
   const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data);
@@ -56,6 +56,7 @@ export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
   currenciesHandlers.set(currency, [...subscribers, cb]);
   subscribeOnWS(currency);
+  //here i shoud start something which checks for the current way of receiving the data, and switch it if needed
 };
 
 export const unsubscribeFromCurrency = currency => {
@@ -64,5 +65,4 @@ export const unsubscribeFromCurrency = currency => {
 };
 
 
-//1) the multiple tabs "MESSAGE": "TOO_MANY_SOCKETS_MAX_1_PER_CLIENT",
 //2) graph fix

@@ -233,7 +233,6 @@ export default {
       });
       if (!found) {
         this.coins = [...this.coins, newCoin];
-        this.updateData(newCoin.name);
         this.coinInput = "";
         subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
 
@@ -333,7 +332,6 @@ export default {
         subscribeToCurrency(coin.name, (newPrice)=>this.updateCoin(coin.name,newPrice))
       })
     }
-    setInterval(this.updateData, 5000);
     /* in const {...} we specify VALID_KEYS*/
     const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
     if (filter) {

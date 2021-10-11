@@ -325,7 +325,6 @@ export default {
     }
   },
   created() {
-    this.loadingAnimation();
     this.fetchFullList();
     const coinsData = localStorage.getItem("coins");
     if (coinsData) {
@@ -343,6 +342,9 @@ export default {
     if (page) {
       this.page = +page;
     }
+  },
+  mounted() {
+    this.loadingAnimation();
   },
   watch: {
     computeProps(value) {

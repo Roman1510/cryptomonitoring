@@ -257,7 +257,12 @@ export default {
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
     updateCoin(coinName,price){
-       this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{coin.price = price})
+       this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{
+         if(coin==this.chosenCoin){
+           this.graph.push(coin.price)
+         }
+         coin.price = price
+       })
     },
     loadingAnimation() {
       document.onreadystatechange = () => {

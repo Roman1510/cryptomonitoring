@@ -9,3 +9,4 @@
  Here some ~Vue3~ knowledge is applied which I managed to acquire
 
 #Enjoy xD
+[Open here](https://roman1510.github.io/cryptomonitoring/)

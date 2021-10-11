@@ -1,18 +1,18 @@
-
-const api_key = process.env.VUE_APP_API_KEY //api key
+const api_key = process.env.VUE_APP_API_KEY; //api key
 const currenciesHandlers = new Map();
-const AGGREGATE_INDEX = '5'
+const AGGREGATE_INDEX = "5";
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
-socket.addEventListener('message',(e)=>{
-  const {TYPE: type, FROMSYMBOL: currency, PRICE: newPrice} = JSON.parse(e.data)
-  if(type !== AGGREGATE_INDEX) {
-    return
+socket.addEventListener("message", (e) => {
+  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data);
+  if (type !== AGGREGATE_INDEX) {
+    return;
+  }
+  const handlers = currenciesHandlers.get(currency) ?? [];
+  if (newPrice) {
+    handlers.forEach(fn => fn(newPrice));
   }
 
-  const handlers = currenciesHandlers.get(currency) ?? [];
-  handlers.forEach(fn => fn(newPrice));
-
-})
+});
 // {
 //   "TYPE": "429",
 //   "MESSAGE": "TOO_MANY_SOCKETS_MAX_1_PER_CLIENT",
@@ -20,38 +20,38 @@ socket.addEventListener('message',(e)=>{
 // }
 //this shit needs to be fixed
 
-function sendToWS(message){
-  const stringifiedMessage = JSON.stringify(message)
-  if(socket.readyState===WebSocket.OPEN){
-    socket.send(stringifiedMessage)
-    return
+function sendToWS(message) {
+  const stringMessage = JSON.stringify(message);
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(stringMessage);
+    return;
   }
-  socket.addEventListener('open',()=>{
-    socket.send(stringifiedMessage)
-  },{once:true})
+  socket.addEventListener("open", () => {
+    socket.send(stringMessage);
+  }, { once: true });
 }
-function subscribeOnWS(currency){
+
+function subscribeOnWS(currency) {
   sendToWS({
     action: "SubAdd",
-    subs:[`5~CCCAGG~${currency}~EUR`]
-  })
+    subs: [`5~CCCAGG~${currency}~USD`]
+  });
 }
-function unsubscribeOnWS(currency){
+
+function unsubscribeOnWS(currency) {
   sendToWS({
     action: "SubRemove",
-    subs:[`5~CCCAGG~${currency}~EUR`]
-  })
+    subs: [`5~CCCAGG~${currency}~USD`]
+  });
 }
+
 export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
   currenciesHandlers.set(currency, [...subscribers, cb]);
-  subscribeOnWS(currency)
+  subscribeOnWS(currency);
 };
 
 export const unsubscribeFromCurrency = currency => {
   currenciesHandlers.delete(currency);
-  unsubscribeOnWS(currency)
+  unsubscribeOnWS(currency);
 };
-
-
-window.tickers = currenciesHandlers;

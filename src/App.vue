@@ -112,7 +112,7 @@
                 {{ item.name }}
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ formatPrice(item.price) }} - EUR
+                {{ formatPrice(item.price) }} - USD
               </dd>
             </div>
             <div class="w-full border-t border-gray-200" />
@@ -144,7 +144,7 @@
         class="relative"
       >
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-          {{ chosenCoin.name }} - EUR
+          {{ chosenCoin.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div

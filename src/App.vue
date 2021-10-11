@@ -260,22 +260,10 @@ export default {
     updateCoin(coinName,price){
        this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{coin.price = price})
     },
-    async updateData() {
-      // if (!this.coins.length) {
-      //   return;
-      // }
-      //
-      // this.coins.forEach(coin => {
-      //   const price = exchangeData[coin.name.toUpperCase()];
-      //   coin.price = price || "-";
-      // });
-    },
     loadingAnimation() {
       document.onreadystatechange = () => {
         if (document.readyState == "complete") {
-          setTimeout(() => {
             this.isLoaded = true;
-          }, 100);
         }
       };
     },

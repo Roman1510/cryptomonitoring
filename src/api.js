@@ -5,7 +5,6 @@ const AGGREGATE_INDEX = "5";
 const bc = new BroadcastChannel('wsdata')
 bc.onmessage = ev => {
   if(ev.data){
-    console.log(ev.data)
     const handlers = currenciesHandlers.get(ev.data.currency) ?? [];
     if (ev.data.newPrice) {
       handlers.forEach(fn => fn(ev.data.newPrice));
@@ -15,16 +14,14 @@ bc.onmessage = ev => {
 const socket =  new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
 socket?.addEventListener("message", (e) => {
   const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data);
-  if (type !== AGGREGATE_INDEX) {
+  if (type !== AGGREGATE_INDEX || newPrice=== undefined) {
     return;
   }
-  if(currency&&newPrice){
+  if(currency){
     bc.postMessage({'type':type,'currency':currency,'newPrice':newPrice})
   }
   const handlers = currenciesHandlers.get(currency) ?? [];
-  if (newPrice) {
     handlers.forEach(fn => fn(newPrice));
-  }
 });
 
 function sendToWS(message) {

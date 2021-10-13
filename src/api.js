@@ -61,5 +61,6 @@ export const unsubscribeFromCurrency = currency => {
   unsubscribeOnWS(currency);
 };
 
-
-//2) graph fix
+// 1) highlight with red when there's no price
+// 2) cross conversion
+// 3) shared worker

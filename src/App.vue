@@ -104,14 +104,16 @@
             @click="select(item)"
             v-for="(item,idx) in paginatedCoins"
             :key="idx"
-            :class="{'border-4':item==chosenCoin}"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
+            :class="{'border-4':item==chosenCoin}"
           >
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">
                 {{ item.name }}
               </dt>
-              <dd class="mt-1 text-3xl font-semibold text-gray-900">
+              <dd class="mt-1 text-3xl font-semibold " 
+                  :class="{'text-gray-900':true/* some condition*/, 'text-red-500':false /* some condition*/}"
+               >
                 {{ formatPrice(item.price) }} - USD
               </dd>
             </div>

@@ -21,7 +21,7 @@ socket?.addEventListener("message", (e) => {
     bc.postMessage({'type':type,'currency':currency,'newPrice':newPrice})
   }
   const handlers = currenciesHandlers.get(currency) ?? [];
-    handlers.forEach(fn => fn(newPrice));
+    handlers.forEach(fn => fn(newPrice)); // here i would just add a new input (flag) to see when there's error
 });
 
 function sendToWS(message) {
@@ -61,6 +61,6 @@ export const unsubscribeFromCurrency = currency => {
   unsubscribeOnWS(currency);
 };
 
-// 1) highlight with red when there's no price
-// 2) cross conversion
-// 3) shared worker
+// 1) highlight with red when there's no FROMSYMBOL (pass some flag about that, from the api.js)
+// 2) cross conversion (this is purely api.js)
+// 3) shared worker (this is purely api.js)

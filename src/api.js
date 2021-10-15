@@ -1,27 +1,32 @@
 const api_key = process.env.VUE_APP_API_KEY; //api key
 const currenciesHandlers = new Map();
 const AGGREGATE_INDEX = "5";
+const MESSAGE_INVALID = "INVALID_SUB";
 
-const bc = new BroadcastChannel('wsdata')
+const bc = new BroadcastChannel("wsdata");
 bc.onmessage = ev => {
-  if(ev.data){
+  if (ev.data) {
     const handlers = currenciesHandlers.get(ev.data.currency) ?? [];
     if (ev.data.newPrice) {
       handlers.forEach(fn => fn(ev.data.newPrice));
     }
   }
-}
-const socket =  new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
+};
+const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
 socket?.addEventListener("message", (e) => {
-  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(e.data);
-  if (type !== AGGREGATE_INDEX || newPrice=== undefined) {
+  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice, MESSAGE: message, PARAMETER: param } = JSON.parse(e.data);
+  if(message===MESSAGE_INVALID){
+    let currencyFromParam = param.split('~')[2]
+    const handlers = currenciesHandlers.get(currencyFromParam) ?? [];
+    handlers.forEach(fn => fn(newPrice,true));
+  }
+  if (type !== AGGREGATE_INDEX || newPrice === undefined) {
     return;
   }
-  if(currency){
-    bc.postMessage({'type':type,'currency':currency,'newPrice':newPrice})
-  }
   const handlers = currenciesHandlers.get(currency) ?? [];
-    handlers.forEach(fn => fn(newPrice)); // here i would just add a new input (flag) to see when there's error
+  handlers.forEach(fn => fn(newPrice,false)); // here i would just add a new input (flag) to see when there's error
+
+  bc.postMessage({ "type": type, "currency": currency, "newPrice": newPrice });
 });
 
 function sendToWS(message) {
@@ -53,13 +58,14 @@ export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
   currenciesHandlers.set(currency, [...subscribers, cb]);
   subscribeOnWS(currency);
-  //here i shoud start something which checks for the current way of receiving the data, and switch it if needed
 };
 
 export const unsubscribeFromCurrency = currency => {
   currenciesHandlers.delete(currency);
   unsubscribeOnWS(currency);
 };
+
+window.coins = currenciesHandlers;
 
 // 1) highlight with red when there's no FROMSYMBOL (pass some flag about that, from the api.js)
 // 2) cross conversion (this is purely api.js)

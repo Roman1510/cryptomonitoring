@@ -112,7 +112,7 @@
                 {{ item.name }}
               </dt>
               <dd class="mt-1 text-3xl font-semibold " 
-                  :class="{'text-gray-900':true/* some condition*/, 'text-red-500':false /* some condition*/}"
+                  :class="{'text-gray-900':item.error===false, 'text-red-500':item.error===true /* some condition*/}"
                >
                 {{ formatPrice(item.price) }} - USD
               </dd>
@@ -228,7 +228,8 @@ export default {
       this.filter = "";
       const newCoin = {
         name: this.coinInput.toUpperCase(),
-        price: "-"
+        price: "-",
+        error: false
       };
       const found = this.coins.find((e) => {
         return e.name === newCoin.name;
@@ -236,7 +237,7 @@ export default {
       if (!found) {
         this.coins = [...this.coins, newCoin];
         this.coinInput = "";
-        subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
+        subscribeToCurrency(newCoin.name, (newPrice,error)=>this.updateCoin(newCoin.name,newPrice,error))
 
       } else {
         this.alreadyExists = true;
@@ -258,12 +259,13 @@ export default {
       }
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
-    updateCoin(coinName,price){
+    updateCoin(coinName,price,error){
        this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{
          if(coin==this.chosenCoin){
            this.graph.push(coin.price)
          }
          coin.price = price
+         coin.error=error
        })
     },
     loadingAnimation() {
@@ -336,7 +338,7 @@ export default {
     if (coinsData) {
       this.coins = JSON.parse(coinsData);
       this.coins.forEach(coin=>{
-        subscribeToCurrency(coin.name, (newPrice)=>this.updateCoin(coin.name,newPrice))
+        subscribeToCurrency(coin.name, (newPrice,error)=>this.updateCoin(coin.name,newPrice,error))
       })
     }
     /* in const {...} we specify VALID_KEYS*/
@@ -373,6 +375,8 @@ export default {
     }
   }
 };
+
+
 </script>
 <style>
 

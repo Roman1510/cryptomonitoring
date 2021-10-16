@@ -39,21 +39,18 @@ function sendToWS(message) {
     socket?.send(stringMessage);
   }, { once: true });
 }
-
 function subscribeOnWS(currency) {
   sendToWS({
     action: "SubAdd",
     subs: [`5~CCCAGG~${currency}~USD`]
   });
 }
-
 function unsubscribeOnWS(currency) {
   sendToWS({
     action: "SubRemove",
     subs: [`5~CCCAGG~${currency}~USD`]
   });
 }
-
 export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
   currenciesHandlers.set(currency, [...subscribers, cb]);
@@ -67,6 +64,5 @@ export const unsubscribeFromCurrency = currency => {
 
 window.coins = currenciesHandlers;
 
-// 1) highlight with red when there's no FROMSYMBOL (pass some flag about that, from the api.js)
-// 2) cross conversion (this is purely api.js)
-// 3) shared worker (this is purely api.js)
+// 1) cross conversion (this is purely api.js)
+// 2) shared worker (this is purely api.js)

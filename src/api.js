@@ -14,19 +14,37 @@ bc.onmessage = ev => {
 };
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
 socket?.addEventListener("message", (e) => {
-  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice, MESSAGE: message, PARAMETER: param } = JSON.parse(e.data);
-  if(message===MESSAGE_INVALID){
-    let currencyFromParam = param.split('~')[2]
-    const handlers = currenciesHandlers.get(currencyFromParam) ?? [];
-    handlers.forEach(fn => fn(newPrice,true));
+  const {
+    TYPE: type,
+    FROMSYMBOL: currencyFrom,
+    TOSYMBOL: currencyTo,
+    PRICE: newPrice,
+    MESSAGE: message,
+    PARAMETER: param
+  } = JSON.parse(e.data);
+  let currencyFromWs = param?.split("~")[2] || "";
+  if (message === MESSAGE_INVALID) {
+    const handlers = currenciesHandlers.get(currencyFromWs) ?? [];
+    handlers.subs.forEach(fn => fn(newPrice, true));
+
+    currenciesHandlers.set(currencyFromWs, { subs: handlers.subs, isCross: true });
+    crossConversion(currencyFromWs);
+
   }
   if (type !== AGGREGATE_INDEX || newPrice === undefined) {
     return;
   }
-  const handlers = currenciesHandlers.get(currency) ?? [];
-  handlers.forEach(fn => fn(newPrice,false)); // here i would just add a new input (flag) to see when there's error
 
-  bc.postMessage({ "type": type, "currency": currency, "newPrice": newPrice });
+  if (currencyFrom === "BTC" && currencyTo === "USD") {
+    console.log('this is the btc usd conversion')
+    //this is the sign that we can loop through all the list with the flag 'iscross', and update the prices,
+    // then, give the full list to the upper level
+    return;
+  }
+  const handlers = currenciesHandlers.get(currencyFrom) ?? [];
+  handlers.subs.forEach(fn => fn(newPrice, false));
+
+  bc.postMessage({ "type": type, "currency": currencyFrom, "newPrice": newPrice });
 });
 
 function sendToWS(message) {
@@ -39,30 +57,41 @@ function sendToWS(message) {
     socket?.send(stringMessage);
   }, { once: true });
 }
-function subscribeOnWS(currency) {
+
+function subscribeOnWS(currencyFrom, currencyTo) {
   sendToWS({
     action: "SubAdd",
-    subs: [`5~CCCAGG~${currency}~USD`]
+    subs: [`5~CCCAGG~${currencyFrom}~${currencyTo}`]
   });
 }
-function unsubscribeOnWS(currency) {
+
+function unsubscribeOnWS(currencyFrom, currencyTo) {
   sendToWS({
     action: "SubRemove",
-    subs: [`5~CCCAGG~${currency}~USD`]
+    subs: [`5~CCCAGG~${currencyFrom}~${currencyTo}`]
   });
 }
+
+function crossConversion(currency) {
+  subscribeOnWS(currency, "BTC");
+  subscribeOnWS("BTC", "USD"); //later will optimize this one (cuz it will duplicate if there's no handling on the api side)
+}
+
 export const subscribeToCurrency = (currency, cb) => {
   const subscribers = currenciesHandlers.get(currency) || [];
-  currenciesHandlers.set(currency, [...subscribers, cb]);
-  subscribeOnWS(currency);
+  currenciesHandlers.set(currency, { subs: [...subscribers, cb], isCross: false });
+  subscribeOnWS(currency, "USD");
 };
 
 export const unsubscribeFromCurrency = currency => {
   currenciesHandlers.delete(currency);
-  unsubscribeOnWS(currency);
+  unsubscribeOnWS(currency, "USD");
 };
 
 window.coins = currenciesHandlers;
 
 // 1) cross conversion (this is purely api.js)
+// it should delete the whole subscription of a currency, then => make a 2-step conversion using btc, then btc=>usd
+
+
 // 2) shared worker (this is purely api.js)

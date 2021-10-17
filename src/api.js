@@ -13,7 +13,6 @@ bc.onmessage = ev => {
   }
 };
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
-let tempRate = 0
 socket?.addEventListener("message", (e) => {
   const {
     TYPE: type,
@@ -25,14 +24,15 @@ socket?.addEventListener("message", (e) => {
   } = JSON.parse(e.data);
   const currencyFromWs = param?.split("~")[2] || "";
   if(currencyTo==="BTC"&&newPrice){
-    tempRate = newPrice
+    const handlers = currenciesHandlers.get(currencyFrom) ?? [];
+    currenciesHandlers.set(currencyFrom, { subs: handlers.subs, isCross: true, tempPrice: newPrice});
   }
 
   if (message === MESSAGE_INVALID) {
     const handlers = currenciesHandlers.get(currencyFromWs) ?? [];
     handlers.subs.forEach(fn => fn(newPrice, true));
 
-    currenciesHandlers.set(currencyFromWs, { subs: handlers.subs, isCross: true });
+    currenciesHandlers.set(currencyFromWs, { subs: handlers.subs, isCross: true});
     crossConversion(currencyFromWs);
 
   }
@@ -40,13 +40,17 @@ socket?.addEventListener("message", (e) => {
     return;
   }
 
-  if (currencyFrom === "BTC" && currencyTo === "USD") {
-    //this is the sign that we can loop through all the list with the flag 'iscross', and update the prices,
-    console.log([...currenciesHandlers.entries()].filter(e=>e.isCross))
-    console.log(currenciesHandlers)
-    // then, give the full list to the upper level
-    return;
-  }
+  //this I should refactor like so: the additional key will be the price of the BTC
+  // and this will be stored as a main temporary key, and will be the first to fetch for all cases. but
+  // after that, with the single ws response, will update the corresponding price
+
+  // if (currencyFrom === "BTC" && currencyTo === "USD") {
+  //   //this is the sign that we can loop through all the list with the flag 'iscross', and update the prices,
+  //   currenciesHandlers.forEach(e=>e.tempPrice=e.tempPrice*newPrice)
+  //   console.log(currenciesHandlers)
+  //   // then, give the full list to the upper level
+  //   return;
+  // }
   const handlers = currenciesHandlers.get(currencyFrom) ?? [];
   handlers.subs.forEach(fn => fn(newPrice, false));
 

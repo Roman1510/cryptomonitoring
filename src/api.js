@@ -13,6 +13,7 @@ bc.onmessage = ev => {
   }
 };
 const socket = new WebSocket(`wss://streamer.cryptocompare.com/v2?api_key=${api_key}`);
+let tempRate = 0
 socket?.addEventListener("message", (e) => {
   const {
     TYPE: type,
@@ -22,7 +23,11 @@ socket?.addEventListener("message", (e) => {
     MESSAGE: message,
     PARAMETER: param
   } = JSON.parse(e.data);
-  let currencyFromWs = param?.split("~")[2] || "";
+  const currencyFromWs = param?.split("~")[2] || "";
+  if(currencyTo==="BTC"&&newPrice){
+    tempRate = newPrice
+  }
+
   if (message === MESSAGE_INVALID) {
     const handlers = currenciesHandlers.get(currencyFromWs) ?? [];
     handlers.subs.forEach(fn => fn(newPrice, true));
@@ -36,8 +41,9 @@ socket?.addEventListener("message", (e) => {
   }
 
   if (currencyFrom === "BTC" && currencyTo === "USD") {
-    console.log('this is the btc usd conversion')
     //this is the sign that we can loop through all the list with the flag 'iscross', and update the prices,
+    console.log([...currenciesHandlers.entries()].filter(e=>e.isCross))
+    console.log(currenciesHandlers)
     // then, give the full list to the upper level
     return;
   }

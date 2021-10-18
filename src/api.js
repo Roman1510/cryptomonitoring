@@ -23,10 +23,7 @@ socket?.addEventListener("message", (e) => {
     PARAMETER: param
   } = JSON.parse(e.data);
   const currencyFromWs = param?.split("~")[2] || "";
-  if(currencyTo==="BTC"&&newPrice){
-    const handlers = currenciesHandlers.get(currencyFrom) ?? [];
-    currenciesHandlers.set(currencyFrom, { subs: handlers.subs, isCross: true, tempPrice: newPrice});
-  }
+
 
   if (message === MESSAGE_INVALID) {
     const handlers = currenciesHandlers.get(currencyFromWs) ?? [];
@@ -34,25 +31,48 @@ socket?.addEventListener("message", (e) => {
 
     currenciesHandlers.set(currencyFromWs, { subs: handlers.subs, isCross: true});
     crossConversion(currencyFromWs);
+    //here i should check if the btc already exists
 
   }
   if (type !== AGGREGATE_INDEX || newPrice === undefined) {
     return;
   }
 
-  //this I should refactor like so: the additional key will be the price of the BTC
-  // and this will be stored as a main temporary key, and will be the first to fetch for all cases. but
-  // after that, with the single ws response, will update the corresponding price
+  if(currencyFrom==="BTC"&&currencyTo==="USD"&&newPrice){
+    const handlers = Object.fromEntries(currenciesHandlers)
+    for(let key in handlers){
+      console.log(handlers[key],key)
+      if(handlers[key].isCross){
+        handlers[key].priceBTC=newPrice
+      }
+    }
 
-  // if (currencyFrom === "BTC" && currencyTo === "USD") {
-  //   //this is the sign that we can loop through all the list with the flag 'iscross', and update the prices,
-  //   currenciesHandlers.forEach(e=>e.tempPrice=e.tempPrice*newPrice)
-  //   console.log(currenciesHandlers)
-  //   // then, give the full list to the upper level
-  //   return;
-  // }
+    const handlersToUpdate = currenciesHandlers.get(currencyFrom) ?? [];
+    handlersToUpdate.subs.forEach(fn => fn(newPrice, false));
+    return;
+
+  }
+  if(currencyTo==="BTC"){
+    let priceBTC = 0;
+    const handlers = Object.fromEntries(currenciesHandlers)
+    for(let key in handlers){
+      console.log(handlers[key],key)
+      if(handlers[key].isCross){
+        priceBTC = handlers[key].priceBTC
+      }
+    }
+    let result = priceBTC*newPrice
+
+    const handlersForUpdate = currenciesHandlers.get(currencyFrom) ?? []
+    handlersForUpdate.subs.forEach(fn=>fn(result,false))
+
+    return
+  }
+
   const handlers = currenciesHandlers.get(currencyFrom) ?? [];
   handlers.subs.forEach(fn => fn(newPrice, false));
+
+
 
   bc.postMessage({ "type": type, "currency": currencyFrom, "newPrice": newPrice });
 });
@@ -83,8 +103,8 @@ function unsubscribeOnWS(currencyFrom, currencyTo) {
 }
 
 function crossConversion(currency) {
-  subscribeOnWS(currency, "BTC");
   subscribeOnWS("BTC", "USD"); //later will optimize this one (cuz it will duplicate if there's no handling on the api side)
+  subscribeOnWS(currency, "BTC");
 }
 
 export const subscribeToCurrency = (currency, cb) => {

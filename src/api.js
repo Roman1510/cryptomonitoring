@@ -36,32 +36,34 @@ socket?.addEventListener("message", (e) => {
   if (type !== AGGREGATE_INDEX || newPrice === undefined) {
     return;
   }
-
+  console.log(Object.fromEntries(currenciesHandlers))
   if(currencyFrom==="BTC"&&currencyTo==="USD"&&newPrice){
     const handlers = Object.fromEntries(currenciesHandlers)
     for(let key in handlers){
-      console.log(handlers[key],key)
       if(handlers[key].isCross){
         handlers[key].priceBTC=newPrice
       }
     }
 
-    const handlersToUpdate = currenciesHandlers.get(currencyFrom) ?? [];
-    handlersToUpdate.subs.forEach(fn => fn(newPrice, false));
-    return;
-
+  debugger
+  //if i have btc in the list, which doesn't have isCross, i update that
+    const handlersToUpdate = currenciesHandlers.get('BTC') ?? [];
+    console.log(handlersToUpdate)
+    if(handlersToUpdate.length&&handlersToUpdate.isCross===false){
+      handlersToUpdate.subs.forEach(fn => fn(newPrice, false));
+    } else {
+      return;
+    }
   }
   if(currencyTo==="BTC"){
     let priceBTC = 0;
     const handlers = Object.fromEntries(currenciesHandlers)
     for(let key in handlers){
-      console.log(handlers[key],key)
       if(handlers[key].isCross){
         priceBTC = handlers[key].priceBTC
       }
     }
     let result = priceBTC*newPrice
-
     const handlersForUpdate = currenciesHandlers.get(currencyFrom) ?? []
     handlersForUpdate.subs.forEach(fn=>fn(result,false))
 
@@ -116,8 +118,6 @@ export const unsubscribeFromCurrency = currency => {
   currenciesHandlers.delete(currency);
   unsubscribeOnWS(currency, "USD");
 };
-
-window.coins = currenciesHandlers;
 
 // 1) check if the btc exists already, then do the needful
 

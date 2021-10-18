@@ -28,7 +28,6 @@ socket?.addEventListener("message", (e) => {
   if (message === MESSAGE_INVALID) {
     const handlers = currenciesHandlers.get(currencyFromWs) ?? [];
     handlers.subs.forEach(fn => fn(newPrice, true));
-
     currenciesHandlers.set(currencyFromWs, { subs: handlers.subs, isCross: true});
     crossConversion(currencyFromWs);
     //here i should check if the btc already exists
@@ -120,8 +119,6 @@ export const unsubscribeFromCurrency = currency => {
 
 window.coins = currenciesHandlers;
 
-// 1) cross conversion (this is purely api.js)
-// it should delete the whole subscription of a currency, then => make a 2-step conversion using btc, then btc=>usd
+// 1) check if the btc exists already, then do the needful
 
-
-// 2) shared worker (this is purely api.js)
+// 2) shared worker (this is purely api.js) (after the cross-conversion bug fixed)

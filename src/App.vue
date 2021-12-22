@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="../../../../Desktop/app.css">
 <template>
   <div class="container mx-auto flex flex-col items-center p-4">
     <div

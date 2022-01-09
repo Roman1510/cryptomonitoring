@@ -6,7 +6,7 @@
  Filters also work
 
 ### This project was made for educational purposes
-with ~VUE~
+with *VUE*
 
 #This is the interface: 
 [Open here](https://roman1510.github.io/cryptomonitoring/)

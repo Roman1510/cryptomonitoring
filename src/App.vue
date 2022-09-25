@@ -1,9 +1,231 @@
-<link rel="stylesheet" href="../../../../Desktop/app.css">
+<script>
+//  [ * ] 1. there are dependent data in  state
+//  [ ] 2. requests directly in the component
+//  [ * ] 3. deleting => subscription is in place still
+//  [ ] 4. api error handling
+//  [ ] 5. request quantity
+//  [ *] 6. when deleting a coin localstorage isn't changed
+//  [ * ] 7. repetitive code in watch
+//  [ ] 8. localstorage and incognito pages
+//  [ ]  9. graph is not ok, when there are too many prices
+//  [ ] 10. magical variables => url, 500, storage key etc.
+
+// in parallel
+//  [ * ]  graph is broken when there's equal values
+//  [ * ] when deleting a coin our choice is still there
+import { listOfCurrency } from './listOfCurrency'
+import { subscribeToCurrency, unsubscribeFromCurrency } from './api.js'
+
+export default {
+  name: 'App',
+  data() {
+    return {
+      isLoaded: false, //for the loader
+      coinInput: '', //for the input
+      coins: [], //list of the tracked coins
+      chosenCoin: null, //chosen coin to track using the graph
+      graph: [], // the graph itself
+      listOfCurrency: [], // the list where i filter the hints from (the local list from the api)
+      alreadyExists: false, // flag for showing error message
+      filter: '',
+      page: 1,
+    }
+  },
+  methods: {
+    selectHint(hint) {
+      this.coinInput = hint
+    },
+    addCoin() {
+      this.filter = ''
+      const newCoin = {
+        name: this.coinInput.toUpperCase(),
+        price: '-',
+      }
+      const found = this.coins.find((e) => {
+        return e.name === newCoin.name
+      })
+      if (!found) {
+        this.coins = [...this.coins, newCoin]
+        this.coinInput = ''
+        subscribeToCurrency(newCoin.name, (newPrice) =>
+          this.updateCoin(newCoin.name, newPrice)
+        )
+      } else {
+        this.alreadyExists = true
+      }
+    },
+    deleteCoin(toDelete) {
+      this.coins = this.coins.filter((e) => e !== toDelete)
+      if (this.chosenCoin === toDelete) {
+        this.chosenCoin = null
+      }
+      unsubscribeFromCurrency(toDelete.name)
+    },
+    select(current) {
+      this.chosenCoin = current
+    },
+    formatPrice(price) {
+      if (!price || price === '-') {
+        return '-'
+      }
+      return price > 1 ? price.toFixed(2) : price.toPrecision(2)
+    },
+    updateCoin(coinName, price) {
+      this.coins
+        .filter((coin) => coin.name === coinName)
+        .forEach((coin) => {
+          if (coin == this.chosenCoin) {
+            this.graph.push(coin.price)
+          }
+          coin.price = price
+        })
+    },
+    loadingAnimation() {
+      document.onreadystatechange = () => {
+        if (document.readyState == 'complete') {
+          this.isLoaded = true
+        }
+      }
+    },
+    async fetchFullList() {
+      const response = await listOfCurrency()
+      this.listOfCurrency = Object.keys(response.Data).map((key) => {
+        return response.Data[key]
+      })
+    },
+  },
+  computed: {
+    isAddEnabled() {
+      if (this.coinInput) {
+        this.isAddEnabled = true
+      } else {
+        this.isAddEnabled = false
+      }
+    },
+    hintsList() {
+      this.alreadyExists = false
+      let result = []
+      const matchingHelper = (input, string) => {
+        return string.toLowerCase().includes(this.coinInput.toLowerCase())
+      }
+      if (this.coinInput) {
+        this.listOfCurrency.forEach((e) => {
+          if (
+            (matchingHelper(this.coinInput, e.Symbol) ||
+              matchingHelper(this.coinInput, e.FullName)) &&
+            result.length < 4
+          ) {
+            result.push(e)
+          }
+        })
+      }
+      return result
+    },
+    startIndex() {
+      return (this.page - 1) * 6
+    },
+    endIndex() {
+      return this.page * 6
+    },
+    hasNextPage() {
+      return this.filteredCoins.length > this.endIndex
+    },
+    filteredCoins() {
+      return this.coins.filter((coin) => coin.name.includes(this.filter))
+    },
+    paginatedCoins() {
+      return this.filteredCoins.slice(this.startIndex, this.endIndex)
+    },
+    normalizedGraph() {
+      const maxValue = Math.max(...this.graph)
+      const minValue = Math.min(...this.graph)
+      if (maxValue === minValue) {
+        return this.graph.map(() => 50)
+      }
+      return this.graph.map((price) => {
+        return 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      })
+    },
+    computeProps() {
+      return {
+        filter: this.filter,
+        page: this.page,
+      }
+    },
+  },
+  created() {
+    this.fetchFullList()
+    const coinsData = localStorage.getItem('coins')
+    if (coinsData) {
+      this.coins = JSON.parse(coinsData)
+      this.coins.forEach((coin) => {
+        subscribeToCurrency(coin.name, (newPrice) =>
+          this.updateCoin(coin.name, newPrice)
+        )
+      })
+    }
+    /* in const {...} we specify VALID_KEYS*/
+    const { filter, page } = Object.fromEntries(
+      new URL(window.location).searchParams.entries()
+    )
+    if (filter) {
+      this.filter = +filter
+    }
+    if (page) {
+      this.page = +page
+    }
+  },
+  mounted() {
+    this.loadingAnimation()
+  },
+  watch: {
+    computeProps(value) {
+      if (value.filter) {
+        this.page = 1
+      }
+      history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${value.filter}&page=${value.page}`
+      )
+    },
+    paginatedCoins() {
+      if (this.paginatedCoins.length === 0 && this.page > 1) {
+        this.page -= 1
+      }
+    },
+    coins() {
+      localStorage.setItem(
+        'coins',
+        JSON.stringify(
+          this.coins.map((e) => {
+            return { name: e.name }
+          })
+        )
+      )
+    },
+    chosenCoin() {
+      this.graph = []
+    },
+  },
+}
+</script>
 <template>
   <div class="container mx-auto flex flex-col items-center p-4">
     <div
-      v-if="isLoaded===false"
-      class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center"
+      v-if="isLoaded === false"
+      class="
+        fixed
+        w-100
+        h-100
+        opacity-80
+        bg-purple-800
+        inset-0
+        z-50
+        flex
+        items-center
+        justify-center
+      "
     >
       <svg
         class="animate-spin -ml-1 mr-3 h-12 w-12 text-white"
@@ -31,10 +253,9 @@
       <section>
         <div class="flex">
           <div class="max-w-xs">
-            <label
-              for="wallet"
-              class="block text-sm font-medium text-gray-700"
-            >Currency</label>
+            <label for="wallet" class="block text-sm font-medium text-gray-700"
+              >Currency</label
+            >
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 @keydown.enter="addCoin"
@@ -42,30 +263,74 @@
                 type="text"
                 name="wallet"
                 id="wallet"
-                class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
+                class="
+                  block
+                  w-full
+                  pr-10
+                  border-gray-300
+                  text-gray-900
+                  focus:outline-none focus:ring-gray-500 focus:border-gray-500
+                  sm:text-sm
+                  rounded-md
+                "
                 placeholder="e.g. DOGE"
-              >
+              />
             </div>
-            <div v-if="hintsList.length" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+            <div
+              v-if="hintsList.length"
+              class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
+            >
               <span
                 @click="selectHint(hint.Symbol)"
                 :key="hint"
                 v-for="hint in hintsList"
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+                class="
+                  inline-flex
+                  items-center
+                  px-2
+                  m-1
+                  rounded-md
+                  text-xs
+                  font-medium
+                  bg-gray-300
+                  text-gray-800
+                  cursor-pointer
+                "
               >
                 {{ hint.Symbol }}
               </span>
             </div>
-            <div v-if="alreadyExists"
-                 class="text-sm text-red-600">
+            <div v-if="alreadyExists" class="text-sm text-red-600">
               This one already exists in the list
             </div>
           </div>
         </div>
         <button
+          :disabled="!isAddEnabled"
           @click="addCoin"
           type="button"
-          class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          class="
+            my-4
+            inline-flex
+            items-center
+            py-2
+            px-4
+            border border-transparent
+            shadow-sm
+            text-sm
+            leading-4
+            font-medium
+            rounded-full
+            text-white
+            bg-gray-600
+            hover:bg-gray-700
+            transition-colors
+            duration-300
+            focus:outline-none
+            focus:ring-2
+            focus:ring-offset-2
+            focus:ring-gray-500
+          "
         >
           <!-- Heroicon name: solid/mail -->
           <svg
@@ -85,27 +350,95 @@
       </section>
       <template v-if="coins.length">
         <div>
-          Filter: <input v-model="filter"
-                         class="inline w-0.2 pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-                         type="text" />
-          <button v-if="hasNextPage" @click="page=page+1"
-                  class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+          Filter:
+          <input
+            v-model="filter"
+            class="
+              inline
+              w-0.2
+              pr-10
+              border-gray-300
+              text-gray-900
+              focus:outline-none focus:ring-gray-500 focus:border-gray-500
+              sm:text-sm
+              rounded-md
+            "
+            type="text"
+          />
+          <button
+            v-if="hasNextPage"
+            @click="page = page + 1"
+            class="
+              mx-2
+              my-4
+              inline-flex
+              items-center
+              py-2
+              px-4
+              border border-transparent
+              shadow-sm
+              text-sm
+              leading-4
+              font-medium
+              rounded-full
+              text-white
+              bg-gray-600
+              hover:bg-gray-700
+              transition-colors
+              duration-300
+              focus:outline-none
+              focus:ring-2
+              focus:ring-offset-2
+              focus:ring-gray-500
+            "
+          >
             Next
           </button>
-          <button v-if="page>1" @click="page=page-1"
-                  class="mx-2 my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+          <button
+            v-if="page > 1"
+            @click="page = page - 1"
+            class="
+              mx-2
+              my-4
+              inline-flex
+              items-center
+              py-2
+              px-4
+              border border-transparent
+              shadow-sm
+              text-sm
+              leading-4
+              font-medium
+              rounded-full
+              text-white
+              bg-gray-600
+              hover:bg-gray-700
+              transition-colors
+              duration-300
+              focus:outline-none
+              focus:ring-2
+              focus:ring-offset-2
+              focus:ring-gray-500
+            "
+          >
             Back
           </button>
-
         </div>
-        <hr class="w-full border-t border-gray-600 my-4">
+        <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
             @click="select(item)"
-            v-for="(item,idx) in paginatedCoins"
+            v-for="(item, idx) in paginatedCoins"
             :key="idx"
-            :class="{'border-4':item==chosenCoin}"
-            class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
+            :class="{ 'border-4': item == chosenCoin }"
+            class="
+              bg-white
+              overflow-hidden
+              shadow
+              rounded-lg
+              border-purple-800 border-solid
+              cursor-pointer
+            "
           >
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">
@@ -118,7 +451,21 @@
             <div class="w-full border-t border-gray-200" />
             <button
               @click.stop="deleteCoin(item)"
-              class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
+              class="
+                flex
+                items-center
+                justify-center
+                font-medium
+                w-full
+                bg-gray-100
+                px-4
+                py-4
+                sm:px-6
+                text-md text-gray-500
+                hover:text-gray-600 hover:bg-gray-200 hover:opacity-20
+                transition-all
+                focus:outline-none
+              "
             >
               <svg
                 class="h-5 w-5"
@@ -137,25 +484,22 @@
             </button>
           </div>
         </dl>
-        <hr class="w-full border-t border-gray-600 my-4">
+        <hr class="w-full border-t border-gray-600 my-4" />
       </template>
-      <section
-        v-if="chosenCoin"
-        class="relative"
-      >
+      <section v-if="chosenCoin" class="relative">
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
           {{ chosenCoin.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-            v-for="(bar,idx) in normalizedGraph"
+            v-for="(bar, idx) in normalizedGraph"
             :key="idx"
-            :style="{height: `${bar? bar: 5}%`}"
+            :style="{ height: `${bar ? bar : 5}%` }"
             class="bg-purple-800 border w-10"
           />
         </div>
         <button
-          @click="chosenCoin=null"
+          @click="chosenCoin = null"
           type="button"
           class="absolute top-0 right-0"
         >
@@ -169,7 +513,7 @@
             x="0"
             y="0"
             viewBox="0 0 511.76 511.76"
-            style="enable-background:new 0 0 512 512"
+            style="enable-background: new 0 0 512 512"
             xml:space="preserve"
           >
             <g>
@@ -185,193 +529,4 @@
     </div>
   </div>
 </template>
-<script>
-//  [ * ] 1. there are dependent data in  state
-//  [ ] 2. requests directly in the component
-//  [ * ] 3. deleting => subscription is in place still
-//  [ ] 4. api error handling
-//  [ ] 5. request quantity
-//  [ *] 6. when deleting a coin localstorage isn't changed
-//  [ * ] 7. repetitive code in watch
-//  [ ] 8. localstorage and incognito pages
-//  [ ]  9. graph is not ok, when there are too many prices
-//  [ ] 10. magical variables => url, 500, storage key etc.
-
-// in parallel
-//  [ * ]  graph is broken when there's equal values
-//  [ * ] when deleting a coin our choice is still there
-import { listOfCurrency } from "./listOfCurrency";
-import { subscribeToCurrency, unsubscribeFromCurrency } from "./api.js";
-
-export default {
-  name: "App",
-  data() {
-    return {
-      isLoaded: false, //for the loader
-      coinInput: "", //for the input
-      coins: [], //list of the tracked coins
-      chosenCoin: null, //chosen coin to track using the graph
-      graph: [], // the graph itself
-      listOfCurrency: [], // the list where i filter the hints from (the local list from the api)
-      alreadyExists: false, // flag for showing error message
-      filter: "",
-      page: 1
-    };
-  },
-  methods: {
-    selectHint(hint) {
-      this.coinInput = hint;
-    },
-    addCoin() {
-      this.filter = "";
-      const newCoin = {
-        name: this.coinInput.toUpperCase(),
-        price: "-"
-      };
-      const found = this.coins.find((e) => {
-        return e.name === newCoin.name;
-      });
-      if (!found) {
-        this.coins = [...this.coins, newCoin];
-        this.coinInput = "";
-        subscribeToCurrency(newCoin.name, (newPrice)=>this.updateCoin(newCoin.name,newPrice))
-
-      } else {
-        this.alreadyExists = true;
-      }
-    },
-    deleteCoin(toDelete) {
-      this.coins = this.coins.filter(e => e !== toDelete);
-      if (this.chosenCoin === toDelete) {
-        this.chosenCoin = null;
-      }
-      unsubscribeFromCurrency(toDelete.name)
-    },
-    select(current) {
-      this.chosenCoin = current;
-    },
-    formatPrice(price) {
-      if (!price || price === "-") {
-        return "-";
-      }
-      return price > 1 ? price.toFixed(2) : price.toPrecision(2);
-    },
-    updateCoin(coinName,price){
-       this.coins.filter(coin=>coin.name === coinName).forEach(coin=>{
-         if(coin==this.chosenCoin){
-           this.graph.push(coin.price)
-         }
-         coin.price = price
-       })
-    },
-    loadingAnimation() {
-      document.onreadystatechange = () => {
-        if (document.readyState == "complete") {
-            this.isLoaded = true;
-        }
-      };
-    },
-    async fetchFullList() {
-      const response = await listOfCurrency();
-      this.listOfCurrency = Object.keys(response.Data).map((key) => {
-        return response.Data[key];
-      });
-    }
-  },
-  computed: {
-    hintsList() {
-      this.alreadyExists = false;
-      let result = [];
-      const matchingHelper = (input, string) => {
-        return string.toLowerCase().includes(this.coinInput.toLowerCase());
-      };
-      if (this.coinInput) {
-        this.listOfCurrency.forEach((e) => {
-          if ((matchingHelper(this.coinInput, e.Symbol) || matchingHelper(this.coinInput, e.FullName)) && result.length < 4) {
-            result.push(e);
-          }
-        });
-      }
-      return result;
-    },
-    startIndex() {
-      return (this.page - 1) * 6;
-    },
-    endIndex() {
-      return this.page * 6;
-    },
-    hasNextPage() {
-      return this.filteredCoins.length > this.endIndex;
-    },
-    filteredCoins() {
-      return this.coins.filter((coin) => coin.name.includes(this.filter));
-    },
-    paginatedCoins() {
-      return this.filteredCoins.slice(this.startIndex, this.endIndex);
-    },
-    normalizedGraph() {
-      const maxValue = Math.max(...this.graph);
-      const minValue = Math.min(...this.graph);
-      if (maxValue === minValue) {
-        return this.graph.map(() => 50);
-      }
-      return this.graph.map(
-        (price) => {
-          return 5 + (((price - minValue) * 95) / (maxValue - minValue));
-        }
-      );
-    },
-    computeProps() {
-      return {
-        filter: this.filter,
-        page: this.page
-      };
-    }
-  },
-  created() {
-    this.fetchFullList();
-    const coinsData = localStorage.getItem("coins");
-    if (coinsData) {
-      this.coins = JSON.parse(coinsData);
-      this.coins.forEach(coin=>{
-        subscribeToCurrency(coin.name, (newPrice)=>this.updateCoin(coin.name,newPrice))
-      })
-    }
-    /* in const {...} we specify VALID_KEYS*/
-    const { filter, page } = Object.fromEntries(new URL(window.location).searchParams.entries());
-    if (filter) {
-      this.filter = +filter;
-    }
-    if (page) {
-      this.page = +page;
-    }
-  },
-  mounted() {
-    this.loadingAnimation();
-  },
-  watch: {
-    computeProps(value) {
-      if (value.filter) {
-        this.page = 1;
-      }
-      history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`);
-    },
-    paginatedCoins() {
-      if (this.paginatedCoins.length === 0 && this.page > 1) {
-        this.page -= 1;
-      }
-    },
-    coins() {
-      localStorage.setItem("coins", JSON.stringify(this.coins.map((e) => {
-        return { name: e.name };
-      })));
-    },
-    chosenCoin() {
-      this.graph = [];
-    }
-  }
-};
-</script>
-<style>
-
-</style>
+<style></style>

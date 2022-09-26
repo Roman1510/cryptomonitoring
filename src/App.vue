@@ -96,11 +96,7 @@ export default {
   },
   computed: {
     isAddEnabled() {
-      if (this.coinInput) {
-        return true
-      } else {
-        return false
-      }
+      return this.coinInput ? true : false
     },
     hintsList() {
       this.alreadyExists = false

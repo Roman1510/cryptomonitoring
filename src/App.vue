@@ -97,9 +97,9 @@ export default {
   computed: {
     isAddEnabled() {
       if (this.coinInput) {
-        this.isAddEnabled = true
+        return true
       } else {
-        this.isAddEnabled = false
+        return false
       }
     },
     hintsList() {

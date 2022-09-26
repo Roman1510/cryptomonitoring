@@ -127,7 +127,9 @@ export default {
       return this.filteredCoins.length > this.endIndex
     },
     filteredCoins() {
-      return this.coins.filter((coin) => coin.name.includes(this.filter))
+      return this.coins.filter((coin) =>
+        coin.name.toLowerCase().includes(this.filter.toLowerCase())
+      )
     },
     paginatedCoins() {
       return this.filteredCoins.slice(this.startIndex, this.endIndex)
